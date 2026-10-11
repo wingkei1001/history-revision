@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocabulary Spelling Game - Renaissance & Enlightenment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f7f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .game-card {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+    h2 {
+      color: #2c3e50;
+      margin-top: 0;
+    }
+    .progress-bar {
+      font-size: 14px;
+      color: #7f8c8d;
+      margin-bottom: 20px;
+    }
+    .word-display {
+      font-size: 28px;
+      font-weight: bold;
+      color: #2980b9;
+      letter-spacing: 2px;
+      margin: 15px 0;
+      min-height: 40px;
+    }
+    .btn-listen {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: background 0.2s;
+    }
+    .btn-listen:hover {
+      background-color: #2980b9;
+    }
+    input[type="text"] {
+      width: 80%;
+      padding: 12px;
+      font-size: 18px;
+      border: 2px solid #bdc3c7;
+      border-radius: 6px;
+      text-align: center;
+      margin-bottom: 15px;
+      outline: none;
+    }
+    input[type="text"]:focus {
+      border-color: #3498db;
+    }
+    .btn-submit {
+      background-color: #2ecc71;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn-submit:hover {
+      background-color: #27ae60;
+    }
+    .feedback {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      min-height: 25px;
+    }
+    .correct {
+      color: #27ae60;
+    }
+    .wrong {
+      color: #e74c3c;
+    }
+    .wrong-list {
+      text-align: left;
+      background: #fdf2e9;
+      padding: 15px 25px;
+      border-radius: 8px;
+      border: 1px solid #e67e22;
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .wrong-list ul {
+      margin: 5px 0 0 0;
+      padding-left: 20px;
+    }
+    .btn-restart {
+      background-color: #e67e22;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="game-card">
+  <h2>歷史詞彙拼字遊戲</h2>
+  <p style="color:#7f8c8d; font-size: 14px;">Chapter 1 – Renaissance and the Enlightenment</p>
+  
+  <div id="game-area">
+    <div class="progress-bar">進度：<span id="current-index">1</span> / <span id="total-words">0</span></div>
+    
+    <div class="word-display" id="word-prompt">---</div>
+    
+    <button class="btn-listen" id="btn-speak" onclick="speakCurrentWord()">🔊 再聽一遍發音</button>
+    
+    <form onsubmit="checkAnswer(event)">
+      <input type="text" id="user-input" placeholder="請在此輸入正確英文..." autocomplete="off" autofocus>
+      <br>
+      <button type="submit" class="btn-submit">提交答案</button>
+    </form>
+    <div class="feedback" id="feedback"></div>
+  </div>
+  
+  <div id="result-area" style="display: none;">
+    <h3 style="color: #27ae60;">🎉 恭喜！你已完成所有詞彙！</h3>
+    <p id="final-score"></p>
+    
+    <div id="wrong-summary" class="wrong-list" style="display: none;">
+      <strong style="color: #d35400;">以下是你曾拼錯或需要複習的字：</strong>
+      <ul id="wrong-words-ul"></ul>
+    </div>
+    
+    <button class="btn-restart" onclick="restartGame()">再玩一次</button>
+  </div>
+</div>
+
+<script>
+  // 工作紙內的所有詞彙列表
+  const vocabularyList = [
+    "Renaissance", "rebirth", "Florence", "Venice",
+    "Rome", "Greco-Roman civilization", "Jerusalem", "Middle East",
+    "religious wars", "Crusades", "merchants", "trades",
+    "sponsored", "paint", "sculptures", "Leonardo da Vinci",
+    "Michelangelo", "Raphael", "Three Masters of the Renaissance", "Islamic",
+    "Catholic", "Christian", "monasteries", "renewed interest",
+    "universities", "knowledge", "philosophy", "illiterate",
+    "German", "Gutenberg", "movable-type printing press", "Humanism",
+    "inquiring", "experiment", "Reformation", "religious movement",
+    "churchmen", "monks", "corrupt", "unacceptable",
+    "indulgences", "sins", "forgiven", "heaven",
+    "criticise", "Martin Luther", "Ninety-Five Theses", "salvation",
+    "expelled", "Protestant", "discoveries", "inventions",
+    "Scientific Revolution", "Copernicus", "Galileo", "sun-centered theory",
+    "earth-centred theory", "dissection", "Industrial Revolution", "Enlightenment",
+    "absolute monarchy", "'divine right of kings'", "obey", "equal",
+    "natural rights", "liberty", "property", "separation of powers",
+    "legislative", "executive", "enforce", "judicial",
+    "judgments", "overthrew", "governments", "principles"
+  ];
+  
+  let currentList = [];
+  let currentIndex = 0;
+  let wrongWords = new Set(); // 記錄曾經拼錯的詞彙
+
+  function initGame() {
+    currentList = [...vocabularyList];
+    currentIndex = 0;
+    wrongWords.clear();
+    
+    document.getElementById("total-words").innerText = currentList.length;
+    document.getElementById("game-area").style.display = "block";
+    document.getElementById("result-area").style.display = "none";
+    
+    loadWord();
+  }
+
+  function loadWord() {
+    if (currentIndex >= currentList.length) {
+      endGame();
+      return;
+    }
+    const currentWord = currentList[currentIndex];
+    
+    document.getElementById("current-index").innerText = currentIndex + 1;
+    document.getElementById("word-prompt").innerText = currentWord;
+    document.getElementById("user-input").value = "";
+    document.getElementById("feedback").innerText = "";
+    document.getElementById("user-input").focus();
+    
+    // 自動讀出聲音
+    speakWord(currentWord);
+  }
+
+  function speakWord(text) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // 停止先前的發音
+      const cleanText = text.replace(/'/g, "");
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.85; // 稍微放慢語速，方便聽清
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  function speakCurrentWord() {
+    speakWord(currentList[currentIndex]);
+  }
+
+  function checkAnswer(event) {
+    event.preventDefault();
+    
+    const inputVal = document.getElementById("user-input").value.trim();
+    const targetWord = currentList[currentIndex];
+    const feedbackEl = document.getElementById("feedback");
+    
+    // 不區分大小寫進行比對
+    if (inputVal.toLowerCase() === targetWord.toLowerCase()) {
+      feedbackEl.className = "feedback correct";
+      feedbackEl.innerText = "✓ 正確！";
+      
+      // 正確後，進入下一題
+      setTimeout(() => {
+        currentIndex++;
+        loadWord();
+      }, 1000);
+    } else {
+      feedbackEl.className = "feedback wrong";
+      feedbackEl.innerText = `✗ 不正確！正確拼法為：${targetWord}`;
+      
+      // 記錄至錯題庫
+      wrongWords.add(targetWord);
+      
+      // 朗讀一遍正確拼法提示
+      speakWord(targetWord);
+      
+      // 清空輸入框，留在當前題目再試一次
+      setTimeout(() => {
+        document.getElementById("user-input").value = "";
+        document.getElementById("user-input").focus();
+      }, 1800);
+    }
+  }
+
+  function endGame() {
+    document.getElementById("game-area").style.display = "none";
+    document.getElementById("result-area").style.display = "block";
+    const total = vocabularyList.length;
+    const wrongCount = wrongWords.size;
+    const correctFirstTry = total - wrongCount;
+    
+    document.getElementById("final-score").innerText = `你完成了全部 ${total} 個詞彙！一次答對：${correctFirstTry} 個。`;
+    
+    const wrongSummary = document.getElementById("wrong-summary");
+    const wrongUl = document.getElementById("wrong-words-ul");
+    wrongUl.innerHTML = "";
+    
+    if (wrongCount > 0) {
+      wrongWords.forEach(word => {
+        const li = document.createElement("li");
+        li.innerText = word;
+        wrongUl.appendChild(li);
+      });
+      wrongSummary.style.display = "block";
+    } else {
+      wrongSummary.style.display = "none";
+    }
+  }
+
+  function restartGame() {
+    initGame();
+  }
+
+  // 初始化遊戲
+  window.onload = initGame;
+</script>
+</body>
+</html>
